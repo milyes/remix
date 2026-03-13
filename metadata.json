@@ -1,0 +1,5 @@
+{
+  "name": "Ubuntu Intelligence",
+  "description": "A sophisticated web-based Ubuntu desktop environment featuring an AI-powered terminal driven by Gemini 3 Flash. Experience the familiar Yaru interface with intelligent system assistance IA22",
+  "requestFramePermissions": []
+}

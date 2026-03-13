@@ -1,0 +1,119 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ubuntu Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&family=Ubuntu+Mono&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Ubuntu', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #772953 0%, #2c001e 100%);
+            height: 100vh;
+            color: white;
+        }
+        .ubuntu-terminal {
+            font-family: 'Ubuntu Mono', monospace;
+        }
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        /* Terminal Markdown Styling */
+        .terminal-markdown h1, .terminal-markdown h2, .terminal-markdown h3 {
+            font-weight: bold;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            color: #E95420;
+        }
+        .terminal-markdown h1 { font-size: 1.25rem; }
+        .terminal-markdown h2 { font-size: 1.1rem; }
+        .terminal-markdown h3 { font-size: 1rem; }
+        .terminal-markdown p { margin-bottom: 0.75rem; }
+        .terminal-markdown ul, .terminal-markdown ol {
+            margin-left: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .terminal-markdown ul { list-style-type: disc; }
+        .terminal-markdown ol { list-style-type: decimal; }
+        .terminal-markdown li { margin-bottom: 0.25rem; }
+        .terminal-markdown a {
+            color: #E95420;
+            text-decoration: none;
+        }
+        .terminal-markdown a:hover {
+            text-decoration: underline;
+        }
+        .terminal-markdown code {
+            background: rgba(0,0,0,0.3);
+            padding: 0.1rem 0.3rem;
+            border-radius: 0.2rem;
+            font-family: 'Ubuntu Mono', monospace;
+            color: #87ff5f;
+        }
+        .terminal-markdown pre {
+            border-radius: 0.4rem;
+            margin-bottom: 1rem;
+        }
+        .terminal-markdown pre code {
+            padding: 1rem !important;
+            background: transparent;
+            font-size: 14px;
+        }
+        .terminal-markdown blockquote {
+            border-left: 3px solid #E95420;
+            padding-left: 1rem;
+            margin-left: 0.5rem;
+            font-style: italic;
+            color: #ccc;
+        }
+        .terminal-markdown table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+        }
+        .terminal-markdown th, .terminal-markdown td {
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 0.5rem;
+            text-align: left;
+        }
+        .terminal-markdown th {
+            background: rgba(233, 84, 32, 0.1);
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.39.0",
+    "react-markdown": "https://esm.sh/react-markdown@^9.0.1",
+    "remark-gfm": "https://esm.sh/remark-gfm@^4.0.0",
+    "react-syntax-highlighter": "https://esm.sh/react-syntax-highlighter@^15.5.0",
+    "react-syntax-highlighter/dist/esm/styles/prism": "https://esm.sh/react-syntax-highlighter@^15.5.0/dist/esm/styles/prism",
+    "react-virtuoso": "https://esm.sh/react-virtuoso@^4.6.2",
+    "react-syntax-highlighter/": "https://esm.sh/react-syntax-highlighter@^16.1.0/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <div id="root"></div>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
