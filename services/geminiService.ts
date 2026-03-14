@@ -1,9 +1,10 @@
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 
 export interface GeminiResponse {
   text: string;
   sources?: { title: string; uri: string }[];
+  functionCalls?: any[];
 }
 
 export class GeminiService {
@@ -12,32 +13,90 @@ export class GeminiService {
     return new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || process.env.API_KEY || '' });
   }
 
-  async processCommand(command: string): Promise<GeminiResponse> {
+  async processCommand(command: string, history: any[] = []): Promise<GeminiResponse> {
     try {
       const ai = this.getAI();
+      
+      const tools = [
+        {
+          functionDeclarations: [
+            {
+              name: "list_files",
+              description: "Liste les fichiers et répertoires dans un chemin donné du système de fichiers virtuel Ubuntu.",
+              parameters: {
+                type: Type.OBJECT,
+                properties: {
+                  path: {
+                    type: Type.STRING,
+                    description: "Le chemin du répertoire à lister (par défaut '.' pour le répertoire courant)."
+                  }
+                }
+              }
+            },
+            {
+              name: "read_file",
+              description: "Lit le contenu d'un fichier spécifique dans le système de fichiers virtuel.",
+              parameters: {
+                type: Type.OBJECT,
+                properties: {
+                  path: {
+                    type: Type.STRING,
+                    description: "Le chemin du fichier à lire."
+                  }
+                },
+                required: ["path"]
+              }
+            },
+            {
+              name: "execute_command",
+              description: "Exécute une commande shell Ubuntu standard (ex: 'uname', 'uptime', 'date', 'whoami').",
+              parameters: {
+                type: Type.OBJECT,
+                properties: {
+                  command: {
+                    type: Type.STRING,
+                    description: "La commande à exécuter."
+                  }
+                },
+                required: ["command"]
+              }
+            }
+          ]
+        },
+        { googleSearch: {} }
+      ];
+
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: command,
+        contents: [
+          ...history,
+          { role: 'user', parts: [{ text: command }] }
+        ],
         config: {
           systemInstruction: `Tu es 'Ubuntu Intelligence', un assistant IA très sophistiqué intégré dans un environnement web Ubuntu 24.04. 
           Les utilisateurs interagissent via un terminal.
+          - Tu as accès à des outils pour interagir avec le système de fichiers virtuel et exécuter des commandes système.
           - Utilise un formatage adapté au terminal (tableaux et listes à espacement fixe).
+          - Si l'utilisateur demande d'effectuer une action (lister des fichiers, lire un fichier, etc.), utilise les outils appropriés.
           - Si l'utilisateur pose des questions sur l'actualité, utilise ton outil de recherche.
           - Adopte une personnalité professionnelle, serviable et centrée sur Ubuntu.
-          - Fournis toujours les URL des sources si tu utilises l'ancrage Google Search.`,
-          tools: [{ googleSearch: {} }],
+          - Fournis toujours les URL des sources si tu utilises l'ancrage Google Search.
+          - Sois concis et efficace dans tes réponses.`,
+          tools,
           temperature: 0.7,
         },
       });
 
-      const text = response.text || "Aucune réponse reçue du système.";
+      const text = response.text || "";
+      const functionCalls = response.functionCalls;
+      
       const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
       const sources = chunks?.map(chunk => ({
         title: chunk.web?.title || 'Source',
         uri: chunk.web?.uri || ''
       })).filter(s => s.uri !== '') || [];
 
-      return { text, sources };
+      return { text, sources, functionCalls };
     } catch (error: unknown) {
       // Safe logging to avoid circular structures
       const errorMsg = error instanceof Error ? error.message : String(error);

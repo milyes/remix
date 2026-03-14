@@ -117,6 +117,7 @@ const Terminal: React.FC<{ onAppOpen: (id: AppID) => void; addNotification: (tex
   const [isProcessing, setIsProcessing] = useState(false);
   const [allCopied, setAllCopied] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [aiHistory, setAiHistory] = useState<any[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
 
@@ -587,10 +588,81 @@ const Terminal: React.FC<{ onAppOpen: (id: AppID) => void; addNotification: (tex
     }
 
     try {
-        const { text, sources } = await geminiService.processCommand(geminiPrompt);
-        let output = text;
-        if (sources && sources.length > 0) {
-        output += '\n\n**Sources:**\n' + sources.map(s => `- [${s.title}](${s.uri})`).join('\n');
+        let currentAiHistory = [...aiHistory];
+        const response = await geminiService.processCommand(geminiPrompt, currentAiHistory);
+        
+        let finalOutput = response.text;
+        let finalSources = response.sources;
+
+        // Handle function calls if any
+        if (response.functionCalls && response.functionCalls.length > 0) {
+          const functionResults: any[] = [];
+          
+          for (const call of response.functionCalls) {
+            const { name, args: callArgs } = call;
+            let result: any = null;
+
+            if (name === 'list_files') {
+              const path = callArgs.path || '.';
+              const targetDir = getDir(path.split('/').filter(p => p && p !== '.'), fs);
+              if (targetDir) {
+                result = Object.keys(targetDir).join('  ');
+              } else {
+                result = "Répertoire non trouvé.";
+              }
+            } else if (name === 'read_file') {
+              const item = getItem(callArgs.path.split('/'), fs);
+              if (item && item.type === 'file') {
+                result = item.content;
+              } else {
+                result = "Fichier non trouvé.";
+              }
+            } else if (name === 'execute_command') {
+              const subCmd = callArgs.command;
+              if (subCmd === 'uname') result = 'Linux ubuntu-intelligence 6.8.0-generic #1 SMP PREEMPT_DYNAMIC x86_64 GNU/Linux';
+              else if (subCmd === 'date') result = new Date().toLocaleString('fr-FR');
+              else if (subCmd === 'uptime') result = 'up 12 hours, 34 minutes, 2 users, load average: 0.05, 0.12, 0.09';
+              else if (subCmd === 'whoami') result = 'ubuntu';
+              else result = `Commande '${subCmd}' non supportée via l'interface IA.`;
+            }
+
+            functionResults.push({
+              role: 'function',
+              name,
+              content: result
+            });
+            
+            setLines(prev => [...prev, { type: 'system', content: `[AI ACTION] Executing ${name}(${JSON.stringify(callArgs)}) -> ${String(result).substring(0, 50)}${String(result).length > 50 ? '...' : ''}` }]);
+          }
+
+          // Send function results back to Gemini to get final explanation
+          const finalResponse = await geminiService.processCommand(geminiPrompt, [
+            ...currentAiHistory,
+            { role: 'model', parts: response.functionCalls.map(fc => ({ functionCall: fc })) },
+            { role: 'function', parts: functionResults.map(r => ({ functionResponse: { name: r.name, response: { result: r.content } } })) }
+          ]);
+          
+          finalOutput = finalResponse.text;
+          finalSources = finalResponse.sources;
+          
+          // Update history with the full interaction
+          setAiHistory(prev => [
+            ...prev,
+            { role: 'user', parts: [{ text: geminiPrompt }] },
+            { role: 'model', parts: [{ text: finalOutput }] }
+          ]);
+        } else {
+          // Update history with simple text interaction
+          setAiHistory(prev => [
+            ...prev,
+            { role: 'user', parts: [{ text: geminiPrompt }] },
+            { role: 'model', parts: [{ text: finalOutput }] }
+          ]);
+        }
+
+        let output = finalOutput;
+        if (finalSources && finalSources.length > 0) {
+          output += '\n\n**Sources:**\n' + finalSources.map(s => `- [${s.title}](${s.uri})`).join('\n');
         }
         setLines(prev => [...prev, { type: 'output', content: output }]);
     } catch (err) {
@@ -691,7 +763,6 @@ const Terminal: React.FC<{ onAppOpen: (id: AppID) => void; addNotification: (tex
           itemContent={itemContent}
           style={{ height: '100%' }}
           followOutput="auto"
-          context={{}}
         />
       </div>
 
